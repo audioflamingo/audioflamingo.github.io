@@ -1,0 +1,905 @@
+<html>
+
+<head>
+    <title>Audio Flamingo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="helper-v2.js" defer=""></script>
+    <style>
+        td {
+            text-align: right;
+            vertical-align: middle;
+            padding: 0 24px;
+        }
+
+        audio {
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .timestamp-label {
+            color: gray;
+        }
+
+        table.wide-audio audio {
+            width: 40vw;
+            max-width: 40vw;
+        }
+
+        tr:not(:first-child) {
+            border-top: 1px solid lightgrey;
+            /* Use light gray color for the border */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container pt-5 mt-5">
+        <div class="text-center">
+            <h1>Audio Flamingo: <br>A Novel Audio Language Model with Few-Shot Learning and Dialogue Abilities</h1>
+        </div>
+        <br><br>
+        <div>
+            <p>
+                <b>Abstract. </b>Augmenting large language models (LLMs) to understand audio -- including non-speech
+                sounds and non-verbal speech -- is critically important for diverse real-world applications of LLMs. In
+                this paper, we propose Audio Flamingo, a novel audio language model with 1) strong audio understanding
+                abilities, 2) the ability to quickly adapt to unseen tasks via in-context learning and retrieval, and 3)
+                strong multi-turn dialogue abilities. We introduce a series of training techniques, architecture design,
+                and data strategies to enhance our model with these abilities. Extensive evaluations across various
+                audio understanding tasks confirm the efficacy of our method, setting new state-of-the-art benchmarks.
+            </p>
+        </div>
+    </div>
+    <div class="container pt-5 mt-5 shadow p-5 mb-5 bg-white rounded">
+        <div class="column is-full-width">
+            <h2>Key Features</h2>
+            <p>
+                💡 Audio Flamingo has strong <b><ins>audio understanding</ins></b> capability<br>
+                💡 Audio Flamingo supports <b><ins>in-context few-shot learning and retrieval augmented
+                        generation</ins></b><br>
+                💡 Audio Flamingo can have <b><ins>multi-turn dialogues</ins></b> with users under complex context <br>
+            </p>
+        </div>
+    </div>
+
+
+    <style>
+        .table-pagination {
+            display: none;
+            /* Hide all tables with pagination class by default */
+        }
+    </style>
+    <script>
+        function showPage(tableId, link, headingId, event) {
+
+            event.preventDefault()
+            if (tableId === 'rich-icl-2') {
+                document.getElementById('rich-icl-1').style.display = 'none';
+            }
+            if (tableId === 'rich-icl-1') {
+                document.getElementById('rich-icl-2').style.display = 'none';
+            }
+            // Hide tables in the same container
+            const containerId = headingId === 'mainHeading1' ? 'container-1' : 'container-2';
+            document.querySelectorAll(`.${containerId} .table-pagination`).forEach(table => {
+                table.style.display = 'none';
+            });
+
+            // Show the selected table
+            document.getElementById(tableId).style.display = 'table';
+
+            // Update heading dynamically based on tableId
+            let headingText = '';
+            if (tableId === 'rich-captions-1') {
+                headingText = 'Audio Flamingo can understand occurences in audio';
+            } else if (tableId === 'rich-captions-2') {
+                headingText = 'Audio Flamingo can understand the order of sounds';
+            } else if (tableId === 'rich-captions-3') {
+                headingText = 'Audio Flamingo can understand the quality of audio';
+            } else if (tableId === 'rich-captions-4') {
+                headingText = 'Audio Flamingo can understand loudness and its change over time';
+            } else if (tableId === 'rich-captions-5') {
+                headingText = 'Audio Flamingo can understand the distance of sounds';
+            } else if (tableId === 'rich-icl-1') {
+                headingText = 'Audio Flamingo can borrow keywords from retrieved samples';
+            } else if (tableId === 'rich-icl-2') {
+                headingText = 'Audio Flamingo can ignore noisy retrieval';
+            }
+
+            // Include the rocket emoji (U+1F680)
+            document.getElementById(headingId).innerHTML = ' 🚀' + headingText;
+
+            // Toggle active state for pagination links
+            document.querySelectorAll('.pagination .page-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            link.parentElement.classList.add('active');
+            // document.querySelector(`.${containerId}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        }
+    </script>
+
+    <div class="text-center">
+        <h2>Audio Understanding</h2>
+
+    </div>
+    <div class="text-center">
+        <p>Audio Flamingo not only achieves the state-of-the-art on audio understanding benchmarks, but also understands
+            audio in depth. <br>
+            Below we show Audio Flamingo can understand (1) occurrences in audio, (2) order of sounds, (3) quality of
+            audio, (4) loudness and it's change over time, and (5) distance of sounds.</p>
+    </div>
+    <div class="container pt-5 mt-5 shadow p-5 mb-5 bg-white rounded container-1">
+        <h4 id="mainHeading1">&#128640; Audio Flamingo can understand occurrences in audio </h4>
+        <div class="flex-container">
+            <div class="table-responsive pt-1">
+                <table class="table-pagination pt-1" id="rich-captions-1" style="display: table;">
+                    <thead>
+                        <tr>
+                            <th style="text-align: center">Audio</th>
+                            <th style="text-align: center">Instruction</th>
+                            <th style="text-align: center">Ground-truth</th>
+                            <th style="text-align: left">Baseline</th>
+                            <th style="text-align: center">Audio Flamingo</th>
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: left"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/occurences/RadioFan.wav" type="audio/wav">Your browser does not
+                                    support the audio element.
+                                </audio></td>
+                            <td style="text-align: center">how many different voices are there?</td>
+                            <td style="text-align: center">three</td>
+                            <td style="text-align: center">one</td>
+                            <td style="text-align: center">three</td>
+                        </tr>
+
+                        <tr style="height: 120px;">
+                            <td style="text-align: left"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/occurences/crickets and owls.wav" type="audio/wav">Your browser
+                                    does not
+                                    support the audio element.
+                                </audio></td>
+                            <td style="text-align: center">how many times is there a loud screeching sound?</td>
+                            <td style="text-align: center">three, many</td>
+                            <td style="text-align: center">two</td>
+                            <td style="text-align: center">three</td>
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: left"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/occurences/00003185.wav" type="audio/wav">Your browser does not
+                                    support the audio element.
+                                </audio></td>
+                            <td style="text-align: center">how many musical instruments were heard throughout the video?
+                            </td>
+                            <td style="text-align: center">two</td>
+                            <td style="text-align: center">one</td>
+                            <td style="text-align: center">two</td>
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: left"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/occurences/Machetes sliding 2.wav" type="audio/wav">Your browser
+                                    does not
+                                    support the audio element.
+                                </audio></td>
+                            <td style="text-align: center">how many different objects are being struck?</td>
+                            <td style="text-align: center">three</td>
+                            <td style="text-align: center">one</td>
+                            <td style="text-align: center">three</td>
+                        </tr>
+
+
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="table-responsive pt-1">
+                <table class="table-pagination pt-1" id="rich-captions-2">
+                    <thead>
+                        <tr>
+                            <th style="text-align: center">Audio</th>
+                            <th style="text-align: center">Ground-truth</th>
+                            <th style="text-align: center">Baseline</th>
+                            <th style="text-align: center">Audio Flamingo</th>
+                        </tr>
+
+                        <tr style="height: 120px;">
+                            <td style="text-align: center"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/order/49956.flac" type="audio/wav">Your browser does not
+                                    support the audio element.
+                                </audio><br> Instruction: Describe this sound</td>
+                            <td style="text-align: center">a man is speaking followed by applause</td>
+                            <td style="text-align: center">a crowd of people are speaking and applauding</td>
+                            <td style="text-align: center">a man is speaking and then the audience claps</td>
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: center"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/order/50239.flac" type="audio/wav">Your browser does not
+                                    support the audio element.
+                                </audio><br> Instruction: Describe this sound</td>
+                            <td style="text-align: center">a person burps followed by laughter</td>
+                            <td style="text-align: center">someone is laughing and then they are laughing</td>
+                            <td style="text-align: center">a burp is followed by laughter and speech</td>
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: center"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/order/50697.flac" type="audio/wav">Your browser does not
+                                    support the audio element.
+                                </audio><br> Instruction: Describe this sound</td>
+                            <td style="text-align: center">a high pitched sneeze followed by sniffling</td>
+                            <td style="text-align: center">a person is sniffing and breathing heavily</td>
+                            <td style="text-align: center">a person sneezes and then breathes heavily </td>
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: center"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/order/50127.flac" type="audio/wav">Your browser does not
+                                    support the audio element.
+                                </audio><br> Instruction: Describe this sound</td>
+                            <td style="text-align: center">a man talking then whistling</td>
+                            <td style="text-align: center">a man is speaking and a woman is speaking</td>
+                            <td style="text-align: center"> a man is speaking and then whistles</td>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+
+            </div>
+            <div class="table-responsive pt-1">
+                <table class="table-pagination pt-1" id="rich-captions-3">
+                    <thead>
+                        <tr>
+                            <th style="text-align: center">Audio</th>
+                            <th style="text-align: center">Instruction</th>
+                            <th style="text-align: center">Ground-truth</th>
+                            <th style="text-align: center">Baseline</th>
+                            <th style="text-align: center">Audio Flamingo</th>
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: left;"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/quality/012598.wav" type="audio/wav">Your browser does not
+                                    support the audio element.
+                                </audio></td>
+                            <td style="text-align: center">What is the overall sound quality of the audio?</td>
+                            <td style="text-align: center">the sound quality of the audio is clear and well-produced,
+                                with a focus on the instruments and vocals</td>
+                            <td style="text-align: center">The overall sound quality of the audio is loud and intense,
+                                with a variety of different sounds that create a sense of chaos and activity in the
+                                environment</td>
+                            <td style="text-align: center">The overall sound quality of the audio is clear and crisp
+                            </td>
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: left;"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/quality/radio tuning 2.wav" type="audio/wav">Your browser does
+                                    not
+                                    support the audio element.
+                                </audio></td>
+                            <td style="text-align: center"> how would one describe the quality of the conversation?</td>
+                            <td style="text-align: center">bad</td>
+                            <td style="text-align: center">radio</td>
+                            <td style="text-align: center">bad</td>
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: left;"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/quality/012872.wav" type="audio/wav">Your browser does not
+                                    support the audio element.
+                                </audio></td>
+                            <td style="text-align: center">What is the atmospheric quality of the audio?</td>
+                            <td style="text-align: center">the atmospheric quality of the audio is its ability to create
+                                a sense of space and depth, with a focus on creating a sense of mystery and wonder</td>
+                            <td style="text-align: center">The audio has a rich and dynamic quality, which suggests a
+                                lively and engaging atmosphere, possibly associated with music or a musical performance,
+                                but it is not specified in the given audio events.
+                            </td>
+                            <td style="text-align: center">the audio has a melancholic and introspective atmosphere
+                            </td>
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: left;"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/quality/012716.wav" type="audio/wav">Your browser does not
+                                    support the audio element.
+                                </audio></td>
+                            <td style="text-align: center">describe the audio in detail.</td>
+                            <td style="text-align: center">the audio is a unique blend of different genres that creates
+                                a distinct sound. the ambient and trance elements give it a calming and meditative feel
+                            </td>
+                            <td style="text-align: center">The audio clip contains a ringtone and a telephone</td>
+                            <td style="text-align: center">the music is slow and has a soothing quality to it
+
+                            </td>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+
+            </div>
+            <div class="table-responsive pt-1">
+                <table class="table-pagination pt-1" id="rich-captions-4">
+                    <thead>
+                        <tr>
+                            <th style="text-align: center">Audio</th>
+                            <th style="text-align: center">Instruction</th>
+                            <th style="text-align: center">Ground-truth</th>
+                            <th style="text-align: center">Baseline</th>
+                            <th style="text-align: center">Audio Flamingo</th>
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: center;"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/loudness/013012.wav" type="audio/wav">Your browser does not
+                                    support the audio element.
+                                </audio></td>
+                            <td style="text-align: center">What is the most striking characteristic of the audio?</td>
+                            <td style="text-align: center">The most striking characteristic of the audio is its powerful
+                                and uplifting nature, which makes it a great choice for anyone looking for an energetic
+                                and inspiring listen</td>
+                            <td style="text-align: center">The audio clip features a guitar playing a fast and
+                                aggressive riff with drums in the background</td>
+                            <td style="text-align: center">The most striking characteristic of the audio is its loudness
+                                and intensity </td>
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: center;"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/loudness/50288.flac" type="audio/wav">Your browser does not
+                                    support the audio element.
+                                </audio></td>
+                            <td style="text-align: center">Describe the sound in a sentence.</td>
+                            <td style="text-align: center">a man briefly talks followed by a loud burst then laughter
+                            </td>
+                            <td style="text-align: center">a person is laughing and a gun is fired</td>
+                            <td style="text-align: center"> a man is speaking and then a loud bang occurs</td>
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: center;"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/amplitude/012924.wav" type="audio/wav">Your browser does not
+                                    support the audio element.
+                                </audio></td>
+                            <td style="text-align: center">How does the soundtrack build tension and drama?</td>
+                            <td style="text-align: center">The soundtrack uses dynamic shifts in tempo, instrumentation,
+                                and volume to build tension and create a sense of dramatic urgency</td>
+                            <td style="text-align: center">The soundtrack builds tension and drama by using a
+                                combination of different musical elements, such as crescendos and sudden changes in
+                                tempo</td>
+                            <td style="text-align: center">The soundtrack gradually builds tension and drama through its
+                                use of orchestral instruments, such as violins and cellos, which create a sense of drama
+                                and tension</td>
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: center;"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/loudness/50000.flac" type="audio/wav">Your browser does not
+                                    support the audio element.
+                                </audio></td>
+                            <td style="text-align: center">Describe the sound in a sentence.</td>
+                            <td style="text-align: center"> a loud distorted belch followed by a series of burping
+                            </td>
+                            <td style="text-align: center">a loud burp and a loud burp</td>
+                            <td style="text-align: center"> a person burps loudly and repeatedly</td>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+
+            </div>
+            <div class="table-responsive pt-1">
+                <table class="table-pagination pt-1" id="rich-captions-5">
+                    <thead>
+                        <tr>
+                            <th>Audio</th>
+                            <th style="text-align: center">Instruction</th>
+                            <th style="text-align: center">Ground-truth</th>
+                            <th style="text-align: center">Baseline</th>
+                            <th style="text-align: center">Audio Flamingo</th>
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: left;"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/audiocaps/50439.flac" type="audio/wav">Your browser does not
+                                    support the audio element.
+                                </audio></td>
+                            <td style="text-align: center">Describe this sound.</td>
+                            <td style="text-align: center">a man talking followed by another man laughing as rain falls
+                                and thunder roars in the distance</td>
+                            <td style="text-align: center">a man is talking and rain is falling.</td>
+                            <td style="text-align: center">a man is talking in the rain with thunder in the background.
+                            </td>
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: left;"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/distance/CAR_WASH.wav" type="audio/wav">Your browser does not
+                                    support the audio element.
+                                </audio></td>
+                            <td style="text-align: center"> is a vehicle moving in the distance?</td>
+                            <td style="text-align: center"> yes</td>
+                            <td style="text-align: center">no</td>
+                            <td style="text-align: center">yes</td>
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: left;"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/distance/Busy Playground.wav" type="audio/wav">Your browser does
+                                    not
+                                    support the audio element.
+                                </audio></td>
+                            <td style="text-align: center"> are there children talking in the distance?</td>
+                            <td style="text-align: center">yes</td>
+                            <td style="text-align: center">no</td>
+                            <td style="text-align: center">yes</td>
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: left;"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/distance/49966.flac" type="audio/wav">Your browser does not
+                                    support the audio element.
+                                </audio></td>
+                            <td style="text-align: center">Describe this sound.</td>
+                            <td style="text-align: center">a bus engine driving in the distance then nearby followed by
+                                compressed air releasing while a woman and a child talk in the distance</td>
+                            <td style="text-align: center">a truck is idling and idling</td>
+                            <td style="text-align: center"> a truck idles in the distance and a child screams</td>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+
+            </div>
+        </div>
+        <!-- Pagination -->
+        <ul class="pagination justify-content-center">
+            <li class="page-item active">
+                <a class="page-link" href="#" onclick="showPage('rich-captions-1', this, 'mainHeading1', event)">1</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="showPage('rich-captions-2', this, 'mainHeading1', event)">2</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="showPage('rich-captions-3', this, 'mainHeading1', event)">3</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="showPage('rich-captions-4', this, 'mainHeading1', event)">4</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="showPage('rich-captions-5', this, 'mainHeading1', event)">5</a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="text-center">
+        <h2>In-Context Learning and Retrieval Augmented Generation</h2>
+    </div>
+    <div class="text-center">
+        <p>Audio Flamingo can be adapted to new tasks via in-context few-shot learning and retrieval augmented
+            generation, without task-specific fune-tuning. <br>
+            Below we show how Audio Flamingo can (1) borrow key words from retrieved samples on audio captioning and (2)
+            disregard retrieved samples if they are noisy and ineffective.</p>
+    </div>
+    <div class="container pt-5 mt-5 shadow p-5 mb-5 bg-white rounded container 2">
+        <h4 id="mainHeading2">&#128640; Audio Flamingo can borrow keywords from retrieved samples</h4>
+        <div class="flex-container">
+            <div class="table-responsive pt-1">
+                <table class="table-pagination pt-1" id="rich-icl-1" style="display: table;">
+                    <thead>
+                        <tr>
+                            <th style="text-align: center">Audio</th>
+                            <th style="text-align: center">Ground-truth </th>
+                            <th style="text-align: center">Baseline </th>
+                            <th style="text-align: center">Audio Flamingo</th>
+                            <th style="text-align: center">Retrieved Samples</th>
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: center;"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/audiocaps/50574.flac" type="audio/wav">Your browser does not
+                                    support the audio element.
+                                </audio><br> Instruction: Describe this sound</td>
+                            <td style="text-align: center">a person snoring repeatedly</td>
+                            <td style="text-align: center">someone is snoring loudly</td>
+                            <td style="text-align: center">a person is snoring <b><ins>in a loop</ins></b></td>
+                            <td style="text-align: center">
+                                <p>
+                                    <audio controls="" controlslist="nodownload" class="px-1">
+                                        <source src="static/audiocaps/evidence/50574/5262.flac" type="audio/wav">Your
+                                        browser does not support the audio element.
+                                    </audio><br>a person snoring almost wheezing <b><ins>continuously</ins></b>
+                                </p>
+                                <p> <audio controls="" controlslist="nodownload" class="px-1">
+                                        <source src="static/audiocaps/evidence/50574/7515.flac" type="audio/wav">Your
+                                        browser does not
+                                        support the audio element.
+                                    </audio><br> someone snores through the nose and makes funny noises </p>
+                                <p> <audio controls="" controlslist="nodownload" class="px-1">
+                                        <source src="static/audiocaps/evidence/50574/45849.flac" type="audio/wav">Your
+                                        browser does not
+                                        support the audio element.
+                                    </audio><br><b><ins>continuous</ins></b> snoring
+                                </p>
+
+                            </td>
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: center;"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/audiocaps/50604.flac" type="audio/wav">Your browser does not
+                                    support the audio element.
+                                </audio><br> Instruction: Describe this sound</td>
+                            <td style="text-align: center">paper is crinkling and crumpling, and thumping occurs</td>
+                            <td style="text-align: center">movement of a person in a kitchen with pots and pans on a
+                                counter </td>
+                            <td style="text-align: center">a person crumples up a sheet of <b><ins>paper and
+                                        crinkles</ins></b> it</td>
+                            <td style="text-align: center">
+                                <p>
+                                    <audio controls="" controlslist="nodownload" class="px-1">
+                                        <source src="static/audiocaps/evidence/50604/10030.flac" type="audio/wav">Your
+                                        browser does not support the audio element.
+                                    </audio><br>Some material is crumpled
+                                </p>
+                                <p> <audio controls="" controlslist="nodownload" class="px-1">
+                                        <source src="static/audiocaps/evidence/50604/27503.flac" type="audio/wav">Your
+                                        browser does not
+                                        support the audio element.
+                                    </audio><br>plastic is being crumpled</p>
+                                <p> <audio controls="" controlslist="nodownload" class="px-1">
+                                        <source src="static/audiocaps/evidence/50604/28518.flac" type="audio/wav">Your
+                                        browser does not
+                                        support the audio element.
+                                    </audio><br><b><ins>crinkling of a paper</ins></b> with a small step
+                                </p>
+
+                            </td>
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: center;"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/audiocaps/49931.flac" type="audio/wav">Your browser does not
+                                    support the audio element.
+                                </audio><br> Instruction: Describe this sound</td>
+                            <td style="text-align: center">pigeons are cooing flapping and a man talks</td>
+                            <td style="text-align: center">pigeons coo and a man speaks</td>
+                            <td style="text-align: center">a man speaks while pigeons coo and <b><ins>flap their
+                                        wings</ins></b></td>
+                            <td style="text-align: center">
+                                <p>
+                                    <audio controls="" controlslist="nodownload" class="px-1">
+                                        <source src="static/audiocaps/evidence/49931/21076.flac" type="audio/wav">Your
+                                        browser does not support the audio element.
+                                    </audio><br>A man talks while pigeons coo and <b><ins>flap wings</ins></b>
+                                </p>
+                                <p> <audio controls="" controlslist="nodownload" class="px-1">
+                                        <source src="static/audiocaps/evidence/49931/28523.flac" type="audio/wav">Your
+                                        browser does not
+                                        support the audio element.
+                                    </audio><br>A person talks nearby as pigeons coo</p>
+                                <p> <audio controls="" controlslist="nodownload" class="px-1">
+                                        <source src="static/audiocaps/evidence/49931/3126.flac" type="audio/wav">Your
+                                        browser does not
+                                        support the audio element.
+                                    </audio><br>Man speaking, doves cooing
+                                </p>
+
+                            </td>
+                        </tr>
+
+                        <tr style="height: 120px;">
+                            <td style="text-align: center;"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/audiocaps/50620.flac" type="audio/wav">Your browser does not
+                                    support the audio element.
+                                </audio><br> Instruction: Describe this sound</td>
+                            <td style="text-align: center">a woman speaks, and faucet water runs</td>
+                            <td style="text-align: center">a woman is talking to a child</td>
+                            <td style="text-align: center"> a woman speaks while <b><ins>water runs from a
+                                        faucet</ins></b>.
+                            <td style="text-align: center">
+                                <p>
+                                    <audio controls="" controlslist="nodownload" class="px-1">
+                                        <source src="static/audiocaps/evidence/50620/3043.flac" type="audio/wav">Your
+                                        browser does not support the audio element.
+                                    </audio><br>a woman speaking and water running
+                                </p>
+                                <p> <audio controls="" controlslist="nodownload" class="px-1">
+                                        <source src="static/audiocaps/evidence/50620/10633.flac" type="audio/wav">Your
+                                        browser does not
+                                        support the audio element.
+                                    </audio><br>a women voice followed by <b><ins>flowing water from a faucet</ins></b>
+                                </p>
+                                <p> <audio controls="" controlslist="nodownload" class="px-1">
+                                        <source src="static/audiocaps/evidence/50620/21723.flac" type="audio/wav">Your
+                                        browser does not
+                                        support the audio element.
+                                    </audio><br>water sprays from a faucet, a person speaks
+                                </p>
+
+                            </td>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="table-responsive pt-1">
+                <table class="table-pagination pt-1" id="rich-icl-2" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th style="text-align: center">Audio</th>
+                            <th style="text-align: center">Instruction </th>
+                            <th style="text-align: center">Ground-truth </th>
+                            <th style="text-align: center">Baseline </th>
+                            <th style="text-align: center">Audio Flamingo</th>
+                            <th style="text-align: center">Retrieved Samples</th>
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: center;"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/gtzan/pop.00053.wav" type="audio/wav">Your browser does not
+                                    support the audio element.
+                                </audio></td>
+                            <td style="text-align: center">What is the genre of this music?</td>
+                            <td style="text-align: center">pop</td>
+                            <td style="text-align: center">pop</td>
+                            <td style="text-align: center">pop</td>
+                            <td style="text-align: center">
+                                <p>
+                                    <audio controls="" controlslist="nodownload" class="px-1">
+                                        <source src="static/gtzan/reggae.00028.wav" type="audio/wav">Your browser does
+                                        not support the audio element.
+                                    </audio><br>reggae
+                                </p>
+                                <p> <audio controls="" controlslist="nodownload" class="px-1">
+                                        <source src="static/gtzan/jazz.00005.wav" type="audio/wav">Your browser does not
+                                        support the audio element.
+                                    </audio><br>jazz</p>
+                                <p> <audio controls="" controlslist="nodownload" class="px-1">
+                                        <source src="static/gtzan/disco.00020.wav" type="audio/wav">Your browser does
+                                        not
+                                        support the audio element.
+                                    </audio><br>disco
+                                </p>
+
+                            </td>
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: center;"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/gtzan/jazz.00003.wav" type="audio/wav">Your browser does not
+                                    support the audio element.
+                                </audio></td>
+                            <td style="text-align: center">What is the genre of this music?</td>
+                            <td style="text-align: center">jazz</td>
+                            <td style="text-align: center">jazz</td>
+                            <td style="text-align: center">jazz</td>
+                            <td style="text-align: center">
+                                <p>
+                                    <audio controls="" controlslist="nodownload" class="px-1">
+                                        <source src="static/gtzan/classical.00005.wav" type="audio/wav">Your browser
+                                        does
+                                        not support the audio element.
+                                    </audio><br>classical
+                                </p>
+                                <p> <audio controls="" controlslist="nodownload" class="px-1">
+                                        <source src="static/gtzan/classical.00073.wav" type="audio/wav">Your browser
+                                        does not
+                                        support the audio element.
+                                    </audio><br>classical</p>
+                                <p> <audio controls="" controlslist="nodownload" class="px-1">
+                                        <source src="static/gtzan/classical.00053.wav" type="audio/wav">Your browser
+                                        does
+                                        not
+                                        support the audio element.
+                                    </audio><br>classical
+                                </p>
+
+                            </td>
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: center;"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source
+                                        src="static/medley/Medley-solos-DB_test-3_0b375202-1d2f-5988-fca1-313cd038251c.wav"
+                                        type="audio/wav">Your browser does not
+                                    support the audio element.
+                                </audio></td>
+                            <td style="text-align: center">What is the instrument of this music?</td>
+                            <td style="text-align: center">flute</td>
+                            <td style="text-align: center">flute</td>
+                            <td style="text-align: center">flute</td>
+                            <td style="text-align: center">
+                                <p>
+                                    <audio controls="" controlslist="nodownload" class="px-1">
+                                        <source
+                                            src="static/medley/Medley-solos-DB_test-0_1fc81460-796b-5f8e-f95d-3ae7ee89ea85.wav"
+                                            type="audio/wav">Your browser does
+                                        not support the audio element.
+                                    </audio><br>clarinet
+                                </p>
+                                <p> <audio controls="" controlslist="nodownload" class="px-1">
+                                        <source
+                                            src="static/medley//Medley-solos-DB_test-0_7173fc9f-d678-5305-f5b6-cfef16218849.wav"
+                                            type="audio/wav">Your browser does not
+                                        support the audio element.
+                                    </audio><br>clarniet</p>
+                                <p> <audio controls="" controlslist="nodownload" class="px-1">
+                                        <source
+                                            src="static/medley/Medley-solos-DB_test-0_6d6246af-f5a5-5ad0-f64b-7f1fd3c89dcf.wav"
+                                            type="audio/wav">Your browser does
+                                        not
+                                        support the audio element.
+                                    </audio><br>clarinet
+                                </p>
+
+                            </td>
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: center;"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/emotion/03-01-04-01-02-01-08.wav" type="audio/wav">Your browser
+                                    does not
+                                    support the audio element.
+                                </audio></td>
+                            <td style="text-align: center">What is the emotion of this speech?</td>
+                            <td style="text-align: center">sad</td>
+                            <td style="text-align: center">sad</td>
+                            <td style="text-align: center">sad</td>
+                            <td style="text-align: center">
+                                <p>
+                                    <audio controls="" controlslist="nodownload" class="px-1">
+                                        <source src="static/emotion/03-01-01-01-01-01-08.wav" type="audio/wav">Your
+                                        browser does
+                                        not support the audio element.
+                                    </audio><br>neutral
+                                </p>
+                                <p> <audio controls="" controlslist="nodownload" class="px-1">
+                                        <source src="static/emotion/03-01-06-01-02-02-20.wav" type="audio/wav">Your
+                                        browser does not
+                                        support the audio element.
+                                    </audio><br>fearful</p>
+                                <p> <audio controls="" controlslist="nodownload" class="px-1">
+                                        <source src="static/emotion/03-01-02-01-01-01-08.wav" type="audio/wav">Your
+                                        browser does
+                                        not
+                                        support the audio element.
+                                    </audio><br>calm
+                                </p>
+
+                            </td>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        <ul class="pagination justify-content-center">
+            <li class="page-item active">
+                <a class="page-link" href="#" onclick="showPage('rich-icl-1',  this, 'mainHeading2',event)">1</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="showPage('rich-icl-2',  this, 'mainHeading2', event)">2</a>
+            </li>
+        </ul>
+    </div>
+
+
+    <div class="text-center">
+        <h2>Multi-turn dialogue</h2>
+    </div>
+    <div class="text-center">
+        <p> Audio Flamingo can have multiple rounds of dialogues with the user. <br>
+            It understands complex context and captures correlations between rounds; for example, it understands
+            pronouns properly.</p>
+    </div>
+    <div class="container pt-5 mt-5 shadow p-5 mb-5 bg-white rounded">
+        <div class="container pt-1">
+            <div class="table-responsive pt-1">
+                <table class="table pt-1" id="dialogue">
+                    <thead>
+                        <tr>
+                            <th style="text-align: center">Audio</th>
+                            <!-- <th style="text-align: center">Baseline</th> -->
+                            <th style="text-align: center">Dialogue</th>
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: center;"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/dialogue/YJ75Aju6BsT8.wav" type="audio/wav">Your browser does
+                                    not
+                                    support the audio element.
+                                </audio></td>
+                            <td style="text-align: left"><b>User</b>: <b>Can you briefly explain what you hear in the
+                                    audio?</b><br>
+                                <b>Ground-truth</b>: The audio primarily consists of bird sounds, including chirping and
+                                bird vocalizations. There are also sounds of other animals. Additionally, there is a
+                                woman speaking at certain intervals.<br>
+                                <b>Baseline</b>: Birds are chirping.<br>
+                                <b>Audio Flamingo</b>: The audio features a variety of sounds including bird
+                                vocalizations, mechanical sounds, impact sounds, a man speaking, and a ticking
+                                sound.<br><br>
+
+                                <b>User</b>: <b>Are the bird sounds continuous?</b><br>
+                                <b>Ground-truth</b>: The bird sounds are not continuous. They occur at different
+                                intervals throughout the audio, with some overlap with the woman's speech.<br>
+                                <b>Baseline</b>: Yes, the bird sounds are continuous.<br>
+                                <b>Audio Flamingo</b>: No, the bird sounds are not continuous. They occur at different
+                                intervals throughout the audio.<br><br>
+
+                                <b>User</b>: <b>Do the bird sounds and the person's speech overlap?</b><br>
+                                <b>Ground-truth</b>: Yes, there are instances where the bird sounds and the woman's
+                                speech overlap.<br>
+                                <b>Baseline</b>: Yes, the bird sounds and the woman's speech overlap.<br>
+                                <b>Audio Flamingo</b>: Yes, the bird sounds and the person's speech do overlap at
+                                certain points in the audio.<br>
+                            </td>
+
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: center;"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/dialogue/YbcybO-SMY5E.wav" type="audio/wav">Your browser does
+                                    not
+                                    support the audio element.
+                                </audio></td>
+                            <td style="text-align: left"><b>User</b>: <b> Is the male voice rapping or singing? </b><br>
+                                <b>Ground-truth</b>: The male voice is doing both, rapping and singing in the audio.<br>
+                                <b>Baseline</b>: The male voice is rapping.<br>
+                                <b>Audio Flamingo</b>: The male voice is rapping.<br><br>
+
+                                <b>User</b>: <b>What kind of music is it?</b><br>
+                                <b>Ground-truth</b>: The type of music isn't specified, but it's accompanied by rapping
+                                and male singing.<br>
+                                <b>Baseline</b>: The kind of music is hip-hop.<br>
+                                <b>Audio Flamingo</b>: The music is a rap song.<br><br>
+
+                                <b>User</b>: <b> Is the male voice the only one present?</b><br>
+                                <b>Ground-truth</b>: Yes, the male voice is the only one specified in the audio, both
+                                rapping and singing.<br>
+                                <b>Baseline</b>: Yes, the male voice is the only one present. <br>
+                                <b>Audio Flamingo</b>: Yes, the male voice is the only one present in the audio.<br>
+                            </td>
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: center;"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/dialogue/YmJ3PAZBus3o.wav" type="audio/wav">Your browser does
+                                    not
+                                    support the audio element.
+                                </audio></td>
+                            <td style="text-align: left"><b>User</b>: <b>Is the rattle sound followed immediately by the
+                                    spray sound?</b><br>
+                                <b>Ground-truth</b>: Yes, the rattle sound is immediately followed by the spray sound
+                                with a very short gap in between.<br>
+                                <b>Baseline</b>: Yes, the rattle sound is followed immediately by the spray sound.<br>
+                                <b>Audio Flamingo</b>: Yes, the rattle sound is followed immediately by the spray
+                                sound.<br><br>
+
+                                <b>User</b>: <b>Does the spray sound occur only once?</b><br>
+                                <b>Ground-truth</b>: No, the spray sound occurs twice in the audio.<br>
+                                <b>Baseline</b>: Yes, the spray sound occurs only once.<br>
+                                <b>Audio Flamingo</b>: No, the spray sound occurs twice in the audio.<br><br>
+
+                                <b>User</b>: <b> Is the second spray sound longer than the first one?</b><br>
+                                <b>Ground-truth</b>: Yes, the second spray sound lasts longer than the first one.<br>
+                                <b>Baseline</b>: Yes, the second spray sound is longer than the first one.<br>
+                                <b>Audio Flamingo</b>: Yes, the second spray sound is longer than the first one.
+                                <br>
+                            </td>
+
+                        </tr>
+                        <tr style="height: 120px;">
+                            <td style="text-align: center;"><audio controls="" controlslist="nodownload" class="px-1">
+                                    <source src="static/dialogue/Yjx27p7k2lSw.wav" type="audio/wav">Your browser does
+                                    not
+                                    support the audio element.
+                                </audio></td>
+                            <td style="text-align: left"><b>User</b>: <b>What genre does this music belong to? </b><br>
+                                <b>Ground-truth</b>: This music belongs to the R&B/Disco genre.<br>
+                                <b>Baseline</b>: It is not specified in the given audio clip.<br>
+                                <b>Audio Flamingo</b>: This music belongs to the R&B genre.<br><br>
+
+                                <b>User</b>: <b>Can you tell me more about the vocals in this track?</b><br>
+                                <b>Ground-truth</b>: Sure, the vocals in this track are from a male singer who is
+                                singing in a higher register. His voice has been modified with effects, making it sound
+                                like a voice sample.<br>
+                                <b>Baseline</b>: The vocals in this track are described as rich and full-bodied, but no
+                                further details are given about the specific singer or the lyrics being sung in the
+                                audio clip.<br>
+                                <b>Audio Flamingo</b>: The vocals in this track are by a male singer. His voice is deep,
+                                resonant, and powerful, adding to the overall emotional impact of the song.<br>
+                            </td>
+
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+
+</body>
+
+</html>
